@@ -1,12 +1,15 @@
-a benchmark tool for constructing minimal perfect hash functions
+a benchmark tool for the construction of [minimal perfect hash functions](https://en.wikipedia.org/wiki/Perfect_hash_function#Minimal_perfect_hash_function)
+
+From Wikipedia: A minimal perfect hash function is a perfect hash function that maps n keys to n consecutive integers—usually [0..n−1] or [1..n].
 
 the phf library is: https://github.com/wahern/phf
+
 emphf is: https://github.com/ot/emphf
 
 the aim of this program is to evaluate the time and memory used by
 those MPHF libraries during construction of the structure.
 
-it creates a minimal perfact hash function over the following input keys:
+it creates a minimal perfect hash function over the following input keys:
 a random set of 64-bits integers
 (however both libraries support more versatile input, e.g. strings)
 
@@ -14,10 +17,10 @@ a random set of 64-bits integers
 How to run 
 ----------
 
-  git clone --recursive https://github.com/rchikhi/benchmphf
-  cd benchmphf
-  make
-  ./benchmphf [number of keys, default: 100,000,000]
+    git clone --recursive https://github.com/rchikhi/benchmphf
+    cd benchmphf
+    make
+    ./benchmphf [number of keys, default: 100,000,000]
 
 
 
@@ -43,8 +46,10 @@ Will only affect MPHF of more than 2^32 (~4 billion) elements though.
 
 
 
-Advanced usage for GATB-core developers (https://github.com/GATB/gatb-core/)
----------------------------------------
+Advanced usage
+--------------
+
+This is for GATB-core developers (https://github.com/GATB/gatb-core/).
 
 - Put the gatb-core library in thirdparty/gatb-core/
 - Comment the "#define VANILLA_EMPHF" line in main.cpp
