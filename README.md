@@ -7,7 +7,7 @@ the phf library is: https://github.com/wahern/phf
 emphf is: https://github.com/ot/emphf
 
 the aim of this program is to evaluate the time and memory used by
-those MPHF libraries during construction of the structure.
+those MPHF libraries during _construction_ of the structure.
 
 it creates a minimal perfect hash function over the following input keys:
 a random set of 64-bits integers
@@ -34,6 +34,12 @@ Example output
 
 Notes
 -----
+
+- The program also provides an estimation of the space used by the structure itself,
+via measuring the process memory usage, so it will be extremely inaccurate 
+for small values of n  (less than tens of millions). Do not use this value 
+in your experiments.
+
 
 - The code contains many #ifdef's, because it can also be used in conjunction with the GATB-core library.
  See below for compiling with GATB-core. It enables to test the emphf library that has been integrated inside GATB-core.
