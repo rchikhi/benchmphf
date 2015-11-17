@@ -13,6 +13,11 @@ it creates a minimal perfect hash function over the following input keys:
 a random set of 64-bits integers
 (however both libraries support more versatile input, e.g. strings)
 
+Requirements
+------------
+
+A compiler that supports C++11 features, e.g. GCC >= 4.9.
+
 
 How to run 
 ----------
