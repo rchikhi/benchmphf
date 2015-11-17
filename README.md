@@ -61,7 +61,7 @@ Note that _emphf_ actually implements [four complementary algorithms](https://gi
 
 _emphf's scan\_mmap_ is slower than _phf_ but constructs more compact MPHFs, and uses less memory during construction. This is partly because _scan\_mmap_ implements an external memory algorithm, and _phf_ does not. The final MPHFs constructed by _phf_  are relatively larger because the library seems to not be performing some of the usual final compression steps (e.g. reduce the range from 1.23n to n using a succinct bit array).
 
-However, I found that the _seq_ and the _HEM_ algorithms are faster than _phf_ during construction, and use less memory. For 1 billion 64-bits random integers, construction using _HEM_ takes 500 seconds and 19 GB of memory, whereas with _phf_ it takes 1790 seconds and 34 GB of memory.
+However, I found that the _seq_ and the _HEM_ algorithms are faster than _phf_ during construction, and use less memory. For 1 billion 64-bits random integers, construction using _HEM_ takes 500 seconds and 12 GB of memory, whereas with _phf_ it takes 1790 seconds and 26 GB of memory.
 
 All algorithms, except _scan\_mmap_, require in the order of 30 bytes per element during construction. _scan\_mmap_ is therefore only one capable of constructing large MPHFs in situations where memory is limited.
 
