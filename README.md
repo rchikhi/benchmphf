@@ -1,6 +1,6 @@
 a benchmark tool for the construction of [minimal perfect hash functions](https://en.wikipedia.org/wiki/Perfect_hash_function#Minimal_perfect_hash_function)
 
-From Wikipedia: A perfect hash function for a set S is a hash function that maps distinct elements in S to a set of integers, with no collisions. A minimal perfect hash function is a perfect hash function that maps n keys to n consecutive integers—usually [0..n−1] or [1..n].
+wikipedia definitions: A perfect hash function for a set S is a hash function that maps distinct elements in S to a set of integers, with no collisions. A minimal perfect hash function is a perfect hash function that maps n keys to n consecutive integers—usually [0..n−1] or [1..n].
 
 the phf library is: https://github.com/wahern/phf
 
@@ -58,10 +58,10 @@ So, which library is better?
 ----------------------------
 
 Short answer: 
-- in terms of API, _phf_'s is easy and well-documented.
+- in terms of API, _phf_'s is easy to include and well-documented.
 - in terms of performance, using the right algorithm from _emphf_ (to minimize either run-time or memory usage) is the best option.
 
-Note that _emphf_ actually implements [four complementary algorithms](https://github.com/ot/emphf): _seq_, _scan_, _scan_mmap_, and _HEM_. By default, this benchmark uses the _scan\_mmap_ algo. But this can be changed by tweaking the source code (in main.cpp.)
+Note that _emphf_ actually implements [four complementary algorithms](https://github.com/ot/emphf): _seq_, _scan_, _scan_mmap_, and _HEM_. By default, this benchmark uses the _scan\_mmap_ algo. But this can be changed by tweaking the source code (in main.cpp).
 
 _emphf's scan\_mmap_ is slower than _phf_ but constructs more compact MPHFs, and uses less memory during construction. This is partly because _scan\_mmap_ implements an external memory algorithm, and _phf_ does not. The final MPHFs constructed by _phf_  are relatively larger because the library seems to not be performing some of the usual final compression steps (e.g. reduce the range from 1.23n to n using a succinct bit array).
 
