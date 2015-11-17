@@ -57,7 +57,7 @@ The estimation of memory taken by the final MPHF (45 MB for emphf) is inaccurate
 So, which library is better?
 ----------------------------
 
-Note that _emphf_ actually implements [four complementary algorithms](https://github.com/ot/emphf): _seq_, _scan_, _scan_mmap_, and _HEM_. By default, this benchmark uses the _scan\_mmap\ algo. But this can be changed by tweaking the source code (in main.cpp).
+Note that _emphf_ actually implements [four complementary algorithms](https://github.com/ot/emphf): _seq_, _scan_, _scan_mmap_, and _HEM_. By default, this benchmark uses the _scan\_mmap_ algo. But this can be changed by tweaking the source code (in main.cpp).
 
 _emphf's scan\_mmap_ is slower than _phf_ but constructs more compact MPHFs, and uses less memory during construction. This is partly because _scan\_mmap_ implements an external memory algorithm, and _phf_ does not. The final MPHFs constructed by _phf_  are relatively larger because the library seems to not be performing some of the usual final compression steps (e.g. reduce the range from 1.23n to n using a succinct bit array).
 
