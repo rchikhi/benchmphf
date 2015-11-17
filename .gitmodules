@@ -1,0 +1,6 @@
+[submodule "emphf"]
+	path = emphf
+	url = https://github.com/ot/emphf
+[submodule "phf"]
+	path = phf
+	url = https://github.com/wahern/phf
