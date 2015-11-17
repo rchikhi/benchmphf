@@ -58,7 +58,7 @@ So, which library is better?
 ----------------------------
 
 Short answer: 
-- in terms of API, _phf_'s is quick to plug.
+- in terms of API, _phf_'s is easy and well-documented.
 - in terms of performance, using the right algorithm from _emphf_ (to minimizer either run-time or memory usage) is the best option.
 
 Note that _emphf_ actually implements [four complementary algorithms](https://github.com/ot/emphf): _seq_, _scan_, _scan_mmap_, and _HEM_. By default, this benchmark uses the _scan\_mmap_ algo. But this can be changed by tweaking the source code (in main.cpp.)
