@@ -32,18 +32,35 @@ How to run
 Example output
 --------------
 
+    $ ./benchmphf 100000000
+    Constructing a MPHF with n=100000000 elements
+    initial data allocation    memory [current, maximum (maxRSS)]: [ 765,  765] MB
+    
+    Construction with 'emphf' library..
+    [...]
+    benchmphf: [vanilla emphf scan] constructed perfect hash for 100000000 keys in 1765.302888s
+    after emphf construction    memory [current, maximum (maxRSS)]: [ 810, 3018] MB 
+    Very rough estimation of memory used by the MPHF constructed by emphf : 45 MB (3.77487 bits per elt)
 
+    Construction with 'phf' library.. 
+    benchmphf: [phf] found perfect hash for 100000000 keys in 232.410405s
+    after phf construction    memory [current, maximum (maxRSS)]: [ 938, 3515] MB 
+    Very rough estimation of memory used by the MPHF constructed by phf : 128 MB (10.7374 bits per elt)
 
-
+What's interesting here is the time (1765 seconds) and peak memory (3018 MB) taken
+for constructing the MPHF using emphf, and similarly for phf. Note that peak memory
+include the data size (here, 765 MB). Hence construction space for emphf is around 3018-765=2253 MB.
+The estimation of memory taken by the final MPHF (45 MB for emphf) is inaccurate, see below.
 
 
 Notes
 -----
 
 - The program also provides an estimation of the space used by the structure itself,
-via measuring the process memory usage, so it will be extremely inaccurate 
-for small values of n  (less than tens of millions). Do not use this value 
-in your experiments.
+via measuring deltas in process memory usage, so it will be extremely inaccurate 
+for small values of n  (less than tens of millions). Do not report this value 
+in any serious experiment; rather, you should carefully estimate the size of the 
+objects that represent the MPHF created by each library.
 
 
 - The code contains many #ifdef's, because it can also be used in conjunction with the GATB-core library.
