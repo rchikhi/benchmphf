@@ -5,6 +5,7 @@
  *
  */
 
+#include <cstdlib> // stdtoul
 #include <random>
 #include <err.h>       /* for warnx() */
 #include "phf/phf.cc" /* phf library */
@@ -200,7 +201,6 @@ void do_emphf()
 	warnx("[%s] constructed perfect hash for %zu keys in %fs", emphf_type.c_str(), n, (double)(end - begin) / CLOCKS_PER_SEC);
 }
 
-#include <random> // using code adapted from http://stackoverflow.com/questions/14009637/c11-random-numbers
 
 
 int main (int argc, char* argv[])
@@ -209,12 +209,13 @@ int main (int argc, char* argv[])
         cout << "Constructing a MPHF with (default) n=" << n << " elements" << std::endl;
     else
     {
-        n = atoi(argv[1]);
+        n = strtoul(argv[1], NULL,0);
         cout << "Constructing a MPHF with n=" << n << " elements" << std::endl;
     }
 
 
     // create a bunch of sorted 64-bits integers (it doesnt matter if they were sorted actually)
+    // adapted from http://stackoverflow.com/questions/14009637/c11-random-numbers
     static std::mt19937_64 rng;
     rng.seed(std::mt19937_64::default_seed);
     data = new u_int64_t[n];
