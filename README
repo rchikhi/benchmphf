@@ -3,13 +3,21 @@ a benchmark tool for constructing minimal perfect hash functions
 the phf library is: https://github.com/wahern/phf
 emphf is: https://github.com/ot/emphf
 
+the aim of this program is to evaluate the time and memory used by
+those MPHF libraries during construction of the structure.
 
-Compilation
-------------
+it creates a minimal perfact hash function over the following input keys:
+a random set of 64-bits integers
+(however both libraries support more versatile input, e.g. strings)
 
-  cd emphf/ && cmake . && cd ..
+
+How to run 
+----------
+
+  git clone --recursive https://github.com/rchikhi/benchmphf
+  cd benchmphf
   make
-  ./benchmphf
+  ./benchmphf [number of keys, default: 100,000,000]
 
 
 

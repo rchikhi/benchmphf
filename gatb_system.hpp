@@ -1,7 +1,4 @@
-// this is part of code from GATB-core, SystemInfoCommon
-//
-//
-#include <cstring>
+// this code is from GATB-core, more specifically SystemInfoCommon.cpp
 
 /*****************************************************************************
  *   GATB : Genome Assembly Tool Box
@@ -22,6 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *****************************************************************************/
 
+#include <cstring>
 using namespace std;
 
 /*********************************************************************
