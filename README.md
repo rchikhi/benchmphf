@@ -1,6 +1,6 @@
 a benchmark tool for the construction of [minimal perfect hash functions](https://en.wikipedia.org/wiki/Perfect_hash_function#Minimal_perfect_hash_function)
 
-From Wikipedia: A perfect hash function for a set S is a hash function that maps distinct elements in S to a set of integers, with no collisions. A minimal perfect hash function is a perfect hash function that maps n keys to n consecutive integers—usually [0..n−1] or [1..n].
+wikipedia definitions: A perfect hash function for a set S is a hash function that maps distinct elements in S to a set of integers, with no collisions. A minimal perfect hash function is a perfect hash function that maps n keys to n consecutive integers—usually [0..n−1] or [1..n].
 
 the phf library is: https://github.com/wahern/phf
 
@@ -49,9 +49,25 @@ Example output
 
 What's interesting here is the time (1765 seconds) and peak memory (3018 MB) taken
 for constructing the MPHF using emphf, and similarly for phf. Note that peak memory
-include the data size (here, 765 MB). Hence construction space for emphf is around 3018-765=2253 MB.
+includes the data size (here, 765 MB). Hence construction space for emphf is around 3018-765=2253 MB.
 The estimation of memory taken by the final MPHF (45 MB for emphf) is inaccurate, see below.
 
+
+
+So, which library is better?
+----------------------------
+
+Short answer: 
+- in terms of API, _phf_'s is easy to include and well-documented.
+- in terms of performance, using the right algorithm from _emphf_ (to minimize either run-time or memory usage) is the best option.
+
+Note that _emphf_ actually implements [four complementary algorithms](https://github.com/ot/emphf): _seq_, _scan_, _scan_mmap_, and _HEM_. By default, this benchmark uses the _scan\_mmap_ algo. But this can be changed by tweaking the source code (in main.cpp).
+
+_emphf's scan\_mmap_ is slower than _phf_ but constructs more compact MPHFs, and uses less memory during construction. This is partly because _scan\_mmap_ implements an external memory algorithm, and _phf_ does not. The final MPHFs constructed by _phf_  are relatively larger because the library does not seem to be performing the final compression steps described in the [CHD algorithm](http://cmph.sourceforge.net/chd.html).
+
+However, I found that the _seq_ and the _HEM_ algorithms are faster than _phf_ during construction, and use less memory. For 1 billion 64-bits random integers, construction using _HEM_ takes 500 seconds and 12 GB of memory, whereas  _phf_ takes 1790 seconds and 26 GB of memory.
+
+All algorithms, except _scan\_mmap_, require in the order of 30 bytes per element during construction. _scan\_mmap_ is therefore only one capable of constructing large MPHFs in situations where memory is limited.
 
 Notes
 -----

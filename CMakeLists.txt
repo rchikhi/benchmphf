@@ -36,7 +36,7 @@ add_definitions("-std=c++0x")  # let's force c++11 in this project
 include_directories (src  ${gatb-core-includes})
 
 # we define the files to be compiled
-file (GLOB_RECURSE  ProjectFiles  main.cpp)
+set (ProjectFiles  main.cpp)
 
 # we define the artifact to be built: the project binary
 add_executable        (${CMAKE_PROJECT_NAME}  ${ProjectFiles})
