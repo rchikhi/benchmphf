@@ -1,5 +1,5 @@
 benchmphf: main.cpp emphf/emphf_config.hpp
-	g++ main.cpp -std=c++11 -o benchmphf
+	g++ main.cpp -std=c++11 -O3 -o benchmphf
 
 emphf/emphf_config.hpp: emphf/emphf_config.hpp.in
 	cd emphf/ && cmake . && cd ..
