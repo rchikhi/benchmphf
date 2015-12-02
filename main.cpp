@@ -30,6 +30,8 @@
 unsigned long n = 100000000; // [phf]: 4 GB mem , ~2 minutes construction
 //unsigned long n = 10000000; // [phf]: 7 seconds construction
 
+bool bench_lookup = false;
+
 #ifdef VANILLA_EMPHF
 
     // vanilla emphf
@@ -113,6 +115,26 @@ void do_phf()
 	end = clock();
 
 	warnx("[phf] found perfect hash for %zu keys in %fs", n, (double)(end - begin) / CLOCKS_PER_SEC);
+	
+	
+	
+	if(bench_lookup)
+	{
+		u_int64_t dumb=0;
+		u_int64_t mphf_value;
+		begin = clock();
+		for (u_int64_t i = 0; i < n; i++)
+		{
+			mphf_value =  PHF::hash<u_int64_t>(&phf,data[i]);
+			//do some silly work
+			dumb+= mphf_value;
+		}
+		
+		end = clock();
+		printf("PHF %lu lookups in  %.2fs,  approx  %.2f ns per lookup   (fingerprint %llu)  \n", n, (double)(end - begin) / CLOCKS_PER_SEC,  ((double)(end - begin) / CLOCKS_PER_SEC)*1000000000/n,dumb);
+	}
+
+	
 }
 
 struct uint64_adaptor
@@ -199,20 +221,42 @@ void do_emphf()
 	end = clock();
 
 	warnx("[%s] constructed perfect hash for %zu keys in %fs", emphf_type.c_str(), n, (double)(end - begin) / CLOCKS_PER_SEC);
+	
+	
+	if(bench_lookup)
+	{
+		u_int64_t dumb=0;
+		u_int64_t mphf_value;
+		begin = clock();
+		for (u_int64_t i = 0; i < n; i++)
+		{
+			mphf_value = mphf.lookup(data[i],adaptor);
+			//do some silly work
+			dumb+= mphf_value;
+		}
+		
+		end = clock();
+		printf("emphf %lu lookups in  %.2fs,  approx  %.2f ns per lookup   (fingerprint %llu)  \n", n, (double)(end - begin) / CLOCKS_PER_SEC,  ((double)(end - begin) / CLOCKS_PER_SEC)*1000000000/n,dumb);
+	}
+	
 }
 
 
 
 int main (int argc, char* argv[])
 {
-    if ( argc != 2 ) 
+	
+    if ( argc < 2 )
         cout << "Constructing a MPHF with (default) n=" << n << " elements" << std::endl;
     else
     {
         n = strtoul(argv[1], NULL,0);
         cout << "Constructing a MPHF with n=" << n << " elements" << std::endl;
     }
-
+	for (int ii=2; ii<argc; ii++)
+	{
+		if(!strcmp("-bench",argv[ii])) bench_lookup= true;
+	}
 
     // create a bunch of sorted 64-bits integers (it doesnt matter if they were sorted actually)
     // adapted from http://stackoverflow.com/questions/14009637/c11-random-numbers

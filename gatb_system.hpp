@@ -205,7 +205,8 @@ u_int64_t getMemoryPhysicalTotal ()
 
     if (sysctl(mib, namelen, &size, &len, NULL, 0) < 0)
     {
-        throw Exception ("Unable to get physical memory");
+        fprintf (stderr,"Unable to get physical memory");
+		return 0;
     }
     else
     {
@@ -237,7 +238,8 @@ u_int64_t getMemoryPhysicalUsed ()
     }
     else
     {
-        throw Exception ("Unable to get free memory");
+        fprintf (stderr,"Unable to get free memory");
+		return 0;
     }
 }
 
@@ -254,6 +256,8 @@ u_int64_t getMemorySelfUsed ()
 
     return t_info.resident_size / 1024;
 }
+
+u_int64_t getMemorySelfMaxUsed()   { return 0; }
 
 #endif
 
