@@ -7,9 +7,11 @@ the phf library is: https://github.com/wahern/phf
 emphf is: https://github.com/ot/emphf
 
 the aim of this program is to evaluate the time and memory used by
-those MPHF libraries during _construction_ of the structure.
+those MPHF libraries during _construction_ of the structure;
+alternatively, when run with the ``-bench`` command line parameter, it evaluates
+query time.
 
-it creates a minimal perfect hash function over the following input keys:
+minimal perfect hash functions are created over the following input keys:
 a random set of 64-bits integers
 (however both libraries support more versatile input, e.g. strings)
 
@@ -104,8 +106,15 @@ This is for GATB-core developers (https://github.com/GATB/gatb-core/).
     bin/benchmphf
 
 
+Contributors
+-----------
+
+G. Rizk
+
+
 Author
 ------
 
 Rayan Chikhi
 rayan.chikhi@univ-lille1.fr
+
