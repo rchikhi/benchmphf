@@ -39,21 +39,21 @@ bool bench_lookup = false;
     #include "emphf/base_hash.hpp"
     #include "emphf/hypergraph.hpp"
     #include "emphf/mmap_memory_model.hpp"
-       
+
     #ifdef EMPHF_HEM
         #include "emphf/mphf_hem.hpp" // for hem
         #include "emphf/hypergraph_sorter_seq.hpp"
     #else
-        
+
         #include "emphf/mphf.hpp"
-        #ifdef EMPHF_SCAN   
+        #ifdef EMPHF_SCAN
             #include "emphf/hypergraph_sorter_scan.hpp"
         #else
             #include "emphf/hypergraph_sorter_seq.hpp"
         #endif
 
     #endif
-    
+
 #else
 
     // emphf from gatb-core
@@ -115,9 +115,9 @@ void do_phf()
 	end = clock();
 
 	warnx("[phf] found perfect hash for %zu keys in %fs", n, (double)(end - begin) / CLOCKS_PER_SEC);
-	
-	
-	
+
+
+
 	if(bench_lookup)
 	{
 		u_int64_t dumb=0;
@@ -125,16 +125,16 @@ void do_phf()
 		begin = clock();
 		for (u_int64_t i = 0; i < n; i++)
 		{
-			mphf_value =  PHF::hash<u_int64_t>(&phf,data[i]);
+			mphf_value =  PHF::hash<u_int64_t>(&phf,data[rand()%n]);
 			//do some silly work
 			dumb+= mphf_value;
 		}
-		
+
 		end = clock();
 		printf("PHF %lu lookups in  %.2fs,  approx  %.2f ns per lookup   (fingerprint %llu)  \n", n, (double)(end - begin) / CLOCKS_PER_SEC,  ((double)(end - begin) / CLOCKS_PER_SEC)*1000000000/n,dumb);
 	}
 
-	
+
 }
 
 struct uint64_adaptor
@@ -148,7 +148,7 @@ struct uint64_adaptor
 };
 
 
-// code from stackoverflow, thank you stack overflow. 
+// code from stackoverflow, thank you stack overflow.
 // http://stackoverflow.com/questions/15904896/range-based-for-loop-on-a-dynamic-array
 template <typename T>
 struct wrapped_array {
@@ -193,10 +193,10 @@ void do_emphf()
 
     uint64_adaptor adaptor;
 
-    auto data_iterator = emphf::range(static_cast<const u_int64_t*>(data), static_cast<const u_int64_t*>(data+n)); 
+    auto data_iterator = emphf::range(static_cast<const u_int64_t*>(data), static_cast<const u_int64_t*>(data+n));
     //auto data_iterator = wrap_array(static_cast<const u_int64_t*>(data),n); // would also work, just to show off that i now know two solutions to wrap an iterator for emphf
-   
-    
+
+
 #ifdef VANILLA_EMPHF
     #ifdef EMPHF_HEM
         emphf::mmap_memory_model mm;
@@ -221,8 +221,8 @@ void do_emphf()
 	end = clock();
 
 	warnx("[%s] constructed perfect hash for %zu keys in %fs", emphf_type.c_str(), n, (double)(end - begin) / CLOCKS_PER_SEC);
-	
-	
+
+
 	if(bench_lookup)
 	{
 		u_int64_t dumb=0;
@@ -230,22 +230,22 @@ void do_emphf()
 		begin = clock();
 		for (u_int64_t i = 0; i < n; i++)
 		{
-			mphf_value = mphf.lookup(data[i],adaptor);
+			mphf_value = mphf.lookup(data[rand()%n],adaptor);
 			//do some silly work
 			dumb+= mphf_value;
 		}
-		
+
 		end = clock();
 		printf("emphf %lu lookups in  %.2fs,  approx  %.2f ns per lookup   (fingerprint %llu)  \n", n, (double)(end - begin) / CLOCKS_PER_SEC,  ((double)(end - begin) / CLOCKS_PER_SEC)*1000000000/n,dumb);
 	}
-	
+
 }
 
 
 
 int main (int argc, char* argv[])
 {
-	
+
     if ( argc < 2 )
         cout << "Constructing a MPHF with (default) n=" << n << " elements" << std::endl;
     else
