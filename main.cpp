@@ -31,6 +31,8 @@ unsigned long n = 100000000; // [phf]: 4 GB mem , ~2 minutes construction
 //unsigned long n = 10000000; // [phf]: 7 seconds construction
 
 bool bench_lookup = false;
+bool from_disk = false;
+u_int64_t nb_in_bench_file;
 
 #ifdef VANILLA_EMPHF
 
@@ -39,21 +41,21 @@ bool bench_lookup = false;
     #include "emphf/base_hash.hpp"
     #include "emphf/hypergraph.hpp"
     #include "emphf/mmap_memory_model.hpp"
-
+       
     #ifdef EMPHF_HEM
         #include "emphf/mphf_hem.hpp" // for hem
         #include "emphf/hypergraph_sorter_seq.hpp"
     #else
-
+        
         #include "emphf/mphf.hpp"
-        #ifdef EMPHF_SCAN
+        #ifdef EMPHF_SCAN   
             #include "emphf/hypergraph_sorter_scan.hpp"
         #else
             #include "emphf/hypergraph_sorter_seq.hpp"
         #endif
 
     #endif
-
+    
 #else
 
     // emphf from gatb-core
@@ -68,6 +70,7 @@ bool bench_lookup = false;
 #endif
 
 using namespace std;
+
 
 
 u_int64_t _previousMem = 0;
@@ -99,6 +102,123 @@ unsigned long memory_usage(string message="", string mphftype="")
 }
 
 
+// iterator from disk file of u_int64_t with buffered read,  todo template
+class bfile_iterator : public std::iterator<std::forward_iterator_tag, u_int64_t>{
+public:
+	
+	bfile_iterator()
+	: _is(nullptr)
+	, _pos(0) ,_inbuff (0), _cptread(0)
+	{
+		_buffsize = 10000;
+		_buffer = (u_int64_t *) malloc(_buffsize*sizeof(u_int64_t));
+	}
+	
+	bfile_iterator(const bfile_iterator& cr)
+	{
+		_buffsize = cr._buffsize;
+		_pos = cr._pos;
+		_is = cr._is;
+		_buffer = (u_int64_t *) malloc(_buffsize*sizeof(u_int64_t));
+		memcpy(_buffer,cr._buffer,_buffsize*sizeof(u_int64_t) );
+		_inbuff = cr._inbuff;
+		_cptread = cr._cptread;
+		_elem = cr._elem;
+	}
+	
+	bfile_iterator(FILE* is): _is(is) , _pos(0) ,_inbuff (0), _cptread(0)
+	{
+		_buffsize = 10000;
+		_buffer = (u_int64_t *) malloc(_buffsize*sizeof(u_int64_t));
+		int reso = fseek(_is,0,SEEK_SET);
+		advance();
+	}
+	
+	~bfile_iterator()
+	{
+		if(_buffer!=NULL)
+			free(_buffer);
+	}
+	
+	
+	u_int64_t const& operator*()  {  return _elem;  }
+	
+	bfile_iterator& operator++()
+	{
+		advance();
+		return *this;
+	}
+	
+	friend bool operator==(bfile_iterator const& lhs, bfile_iterator const& rhs)
+	{
+		if (!lhs._is || !rhs._is)  {  if (!lhs._is && !rhs._is) {  return true; } else {  return false;  } }
+		assert(lhs._is == rhs._is);
+		return rhs._pos == lhs._pos;
+	}
+	
+	friend bool operator!=(bfile_iterator const& lhs, bfile_iterator const& rhs)  {  return !(lhs == rhs);  }
+private:
+	void advance()
+	{
+		_pos++;
+		if(_cptread >= _inbuff)
+		{
+			int res = fread(_buffer,sizeof(u_int64_t),_buffsize,_is);
+			_inbuff = res; _cptread = 0;
+			
+			if(res == 0)
+			{
+				_is = nullptr;
+				_pos = 0;
+				return;
+			}
+		}
+		
+		_elem = _buffer[_cptread];
+		_cptread ++;
+	}
+	u_int64_t _elem;
+	FILE * _is;
+	unsigned long _pos;
+	
+	u_int64_t * _buffer; // for buffered read
+	int _inbuff, _cptread;
+	int _buffsize;
+};
+
+
+class file_binary{
+public:
+	
+	file_binary(const char* filename)
+	{
+		_is = fopen(filename, "rb");
+		if (!_is) {
+			throw std::invalid_argument("Error opening " + std::string(filename));
+		}
+	}
+	~file_binary()
+	{
+		fclose(_is);
+	}
+	
+	bfile_iterator begin() const
+	{
+		return bfile_iterator(_is);
+	}
+	
+	bfile_iterator end() const {return bfile_iterator(); }
+	
+	size_t        size () const  {  return 0;  }//todo ?
+private:
+	FILE * _is;
+};
+
+
+
+
+
+
 
 
 
@@ -115,9 +235,9 @@ void do_phf()
 	end = clock();
 
 	warnx("[phf] found perfect hash for %zu keys in %fs", n, (double)(end - begin) / CLOCKS_PER_SEC);
-
-
-
+	
+	
+	
 	if(bench_lookup)
 	{
 		u_int64_t dumb=0;
@@ -125,16 +245,16 @@ void do_phf()
 		begin = clock();
 		for (u_int64_t i = 0; i < n; i++)
 		{
-			mphf_value =  PHF::hash<u_int64_t>(&phf,data[rand()%n]);
+			mphf_value =  PHF::hash<u_int64_t>(&phf,data[i]);
 			//do some silly work
 			dumb+= mphf_value;
 		}
-
+		
 		end = clock();
 		printf("PHF %lu lookups in  %.2fs,  approx  %.2f ns per lookup   (fingerprint %llu)  \n", n, (double)(end - begin) / CLOCKS_PER_SEC,  ((double)(end - begin) / CLOCKS_PER_SEC)*1000000000/n,dumb);
 	}
 
-
+	
 }
 
 struct uint64_adaptor
@@ -148,7 +268,7 @@ struct uint64_adaptor
 };
 
 
-// code from stackoverflow, thank you stack overflow.
+// code from stackoverflow, thank you stack overflow. 
 // http://stackoverflow.com/questions/15904896/range-based-for-loop-on-a-dynamic-array
 template <typename T>
 struct wrapped_array {
@@ -184,68 +304,102 @@ wrapped_array<T> wrap_array(T* first, std::ptrdiff_t size) noexcept
 mphf_t mphf; // let's put it as global variable so that mphf isn't destroyed after end of function
 void do_emphf()
 {
-    clock_t begin, end;
+	clock_t begin, end;
 	begin = clock();
-
+	
 #ifndef EMPHF_HEM
-    HypergraphSorter32 sorter;
+	HypergraphSorter32 sorter;
 #endif
-
-    uint64_adaptor adaptor;
-
-    auto data_iterator = emphf::range(static_cast<const u_int64_t*>(data), static_cast<const u_int64_t*>(data+n));
-    //auto data_iterator = wrap_array(static_cast<const u_int64_t*>(data),n); // would also work, just to show off that i now know two solutions to wrap an iterator for emphf
-
-
+	
+	uint64_adaptor adaptor;
+	
+	
+	
+	
+	
+	//auto data_iterator = emphf::range(static_cast<const u_int64_t*>(data), static_cast<const u_int64_t*>(data+n));
+	//auto data_iterator = wrap_array(static_cast<const u_int64_t*>(data),n); // would also work, just to show off that i now know two solutions to wrap an iterator for emphf
+	
+	
 #ifdef VANILLA_EMPHF
-    #ifdef EMPHF_HEM
-        emphf::mmap_memory_model mm;
-        mphf_t(mm, n, data_iterator, adaptor).swap(mphf);
-        string emphf_type = "vanilla emphf HEM";
-    #else
-        #ifdef EMPHF_SCAN
-            string emphf_type = "vanilla emphf scan";
-        #else
-            #ifdef EMPHF_SEQ
-                string emphf_type = "vanilla emphf seq";
-            #endif
-        #endif
-        mphf_t(sorter, n, data_iterator, adaptor).swap(mphf);
-    #endif
+#ifdef EMPHF_HEM
+	emphf::mmap_memory_model mm;
+	mphf_t(mm, n, data_iterator, adaptor).swap(mphf);
+	string emphf_type = "vanilla emphf HEM";
 #else
-    gatb::core::tools::dp::IteratorListener* progress = nullptr; // added by gatb in emphf
-    mphf_t(sorter, n, data_iterator, adaptor, progress).swap(mphf);
-    string emphf_type = "gatb-core emphf";
+#ifdef EMPHF_SCAN
+	string emphf_type = "vanilla emphf scan";
+#else
+#ifdef EMPHF_SEQ
+	string emphf_type = "vanilla emphf seq";
 #endif
-
+#endif
+	if(from_disk)
+	{
+		auto data_iterator = file_binary("keyfile");
+		mphf_t(sorter, n, data_iterator, adaptor).swap(mphf);
+	}
+	else
+	{
+		auto data_iterator = emphf::range(static_cast<const u_int64_t*>(data), static_cast<const u_int64_t*>(data+n));
+		mphf_t(sorter, n, data_iterator, adaptor).swap(mphf);
+	}
+#endif
+#else
+	gatb::core::tools::dp::IteratorListener* progress = nullptr; // added by gatb in emphf
+	mphf_t(sorter, n, data_iterator, adaptor, progress).swap(mphf);
+	string emphf_type = "gatb-core emphf";
+#endif
+	
 	end = clock();
-
+	
 	warnx("[%s] constructed perfect hash for %zu keys in %fs", emphf_type.c_str(), n, (double)(end - begin) / CLOCKS_PER_SEC);
-
-
-	if(bench_lookup)
+	
+	
+	if(bench_lookup && !from_disk)
 	{
 		u_int64_t dumb=0;
 		u_int64_t mphf_value;
 		begin = clock();
 		for (u_int64_t i = 0; i < n; i++)
 		{
-			mphf_value = mphf.lookup(data[rand()%n],adaptor);
+			mphf_value = mphf.lookup(data[i],adaptor);
 			//do some silly work
 			dumb+= mphf_value;
 		}
-
+		
 		end = clock();
 		printf("emphf %lu lookups in  %.2fs,  approx  %.2f ns per lookup   (fingerprint %llu)  \n", n, (double)(end - begin) / CLOCKS_PER_SEC,  ((double)(end - begin) / CLOCKS_PER_SEC)*1000000000/n,dumb);
 	}
+	
+	if (bench_lookup && from_disk)
+	{
+		
+		u_int64_t dumb=0;
+		u_int64_t mphf_value;
+		begin = clock();
+		
+		auto data_iterator = file_binary("benchfile");
 
+		for (auto const& key: data_iterator) {
+			mphf_value = mphf.lookup(key,adaptor);
+			//do some silly work
+			dumb+= mphf_value;
+		}
+		
+		
+		end = clock();
+		printf("emphf %llu lookups in  %.2fs,  approx  %.2f ns per lookup   (fingerprint %llu)  \n", nb_in_bench_file, (double)(end - begin) / CLOCKS_PER_SEC,  ((double)(end - begin) / CLOCKS_PER_SEC)*1000000000/nb_in_bench_file,dumb);
+	
+	}
+	
 }
 
 
 
 int main (int argc, char* argv[])
 {
-
+	
     if ( argc < 2 )
         cout << "Constructing a MPHF with (default) n=" << n << " elements" << std::endl;
     else
@@ -256,23 +410,70 @@ int main (int argc, char* argv[])
 	for (int ii=2; ii<argc; ii++)
 	{
 		if(!strcmp("-bench",argv[ii])) bench_lookup= true;
+		if(!strcmp("-fromdisk",argv[ii])) from_disk= true;
 	}
 
-    // create a bunch of sorted 64-bits integers (it doesnt matter if they were sorted actually)
-    // adapted from http://stackoverflow.com/questions/14009637/c11-random-numbers
-    static std::mt19937_64 rng;
-    rng.seed(std::mt19937_64::default_seed);
-    data = new u_int64_t[n];
-    for (u_int64_t i = 1; i < n; i++)
-        data[i] = rng();
+	FILE * key_file = NULL;
+	FILE * bench_file = NULL;
+	
+	if(from_disk)
+	{
+		key_file = fopen("keyfile","w+");
 
+		//simple mehtod to ensure all elements are unique, but not random
+		u_int64_t step = ULLONG_MAX / n;
+		u_int64_t current = 0;
+		fwrite(&current, sizeof(u_int64_t), 1, key_file);
+		for (u_int64_t i = 1; i < n; i++)
+		{
+			current = current + step;
+			fwrite(&current, sizeof(u_int64_t), 1, key_file);
+		}
+		fclose(key_file);
+		printf("key file generated \n");
+		
+		if(bench_lookup)
+		{
+			bench_file = fopen("benchfile","w+");
+
+			//create a test file
+			//if n < 10 M take all elements, otherwise regular sample to have 10 M elements
+			u_int64_t stepb =  n  / 10000000;
+			if(stepb==0) stepb=1;
+			auto data_iterator = file_binary("keyfile");
+			u_int64_t cpt = 0;
+			nb_in_bench_file = 0;
+			for (auto const& key: data_iterator) {
+				if( (cpt % stepb) == 0)
+				{
+					fwrite(&key, sizeof(u_int64_t), 1, bench_file);
+					nb_in_bench_file ++;
+				}
+				cpt++;
+			}
+			
+		}
+	}
+	else
+	{
+		// create a bunch of sorted 64-bits integers (it doesnt matter if they were sorted actually)
+		// adapted from http://stackoverflow.com/questions/14009637/c11-random-numbers
+		static std::mt19937_64 rng;
+		rng.seed(std::mt19937_64::default_seed);
+		data = new u_int64_t[n];
+		for (u_int64_t i = 1; i < n; i++)
+			data[i] = rng();
+	}
     memory_usage("initial data allocation");
 
     cout << endl << "Construction with 'emphf' library.. " << endl;
     do_emphf();
     memory_usage("after emphf construction", "emphf");
 
-    cout << endl << "Construction with 'phf' library.. " << endl;
-    do_phf();
-    memory_usage("after phf construction","phf");
+	if(!from_disk)
+	{
+		cout << endl << "Construction with 'phf' library.. " << endl;
+		do_phf();
+		memory_usage("after phf construction","phf");
+	}
 }
