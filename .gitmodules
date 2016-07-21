@@ -4,3 +4,6 @@
 [submodule "phf"]
 	path = phf
 	url = https://github.com/wahern/phf
+[submodule "cmph"]
+	path = cmph
+	url = https://github.com/zvelo/cmph.git

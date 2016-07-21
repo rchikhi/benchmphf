@@ -5,10 +5,13 @@
  *
  */
 
+#include <unistd.h>
+
 #include <cstdlib> // stdtoul
 #include <random>
 #include <err.h>       /* for warnx() */
 #include "phf/phf.cc" /* phf library */
+#include "libcmph/include/cmph.h" /* cmph library */
 #include "gatb_system.hpp"
 
 // parameters:
@@ -73,6 +76,45 @@ using namespace std;
 
 
 
+
+//taken from emphf for consistent bench
+struct stats_accumulator {
+	stats_accumulator()
+	: m_n(0)
+	, m_mean(0)
+	, m_m2(0)
+	{}
+	
+	void add(double x)
+	{
+		m_n += 1;
+		auto delta = x - m_mean;
+		m_mean += delta / m_n;
+		m_m2 += delta * (x - m_mean);
+	}
+	
+	double mean() const
+	{
+		return m_mean;
+	}
+	
+	double variance() const
+	{
+		return m_m2 / (m_n - 1);
+	}
+	
+	double relative_stddev() const
+	{
+		return std::sqrt(variance()) / mean() * 100;
+	}
+	
+private:
+	double m_n;
+	double m_mean;
+	double m_m2;
+};
+
+
 u_int64_t _previousMem = 0;
 unsigned long memory_usage(string message="", string mphftype="")
 {
@@ -85,7 +127,7 @@ unsigned long memory_usage(string message="", string mphftype="")
 
     /** We format the string to be displayed. */
     char tmp[128];
-    snprintf (tmp, sizeof(tmp), "   memory [current, maximum (maxRSS)]: [%4lu, %4lu] MB ",
+    snprintf (tmp, sizeof(tmp), "   memory [current, maximum (maxRSS)]: [%4llu, %4llu] MB ",
             mem, memMaxProcess
             );
 
@@ -395,6 +437,98 @@ void do_emphf()
 	
 }
 
+void do_chd()
+{
+	clock_t begin, end;
+	begin = clock();
+	
+	//Open file with newline separated list of keys
+	FILE * keys_fd = fopen("keyfile_chd.txt", "r");
+	cmph_t *hash = NULL;
+	if (keys_fd == NULL)
+	{
+		fprintf(stderr, "File \"keys_chd.txt\" not found\n");
+		exit(1);
+	}
+	// Source of keys
+	cmph_io_adapter_t *source = cmph_io_nlfile_adapter(keys_fd);
+	
+	cmph_config_t *config = cmph_config_new(source);
+	cmph_config_set_algo(config, CMPH_CHD);
+	hash = cmph_new(config);
+	cmph_config_destroy(config);
+	
+	
+	end = clock();
+	
+	warnx("[%s] constructed perfect hash for %zu keys in %fs", "CMPH_CHD", n, (double)(end - begin) / CLOCKS_PER_SEC);
+	
+	
+	if (bench_lookup && from_disk)
+	{
+		
+		
+		
+		
+		vector<std::string> sample;
+		u_int64_t mphf_value;
+		
+		FILE * keyb = fopen ("keyfile_chd.txt","r");
+		
+		//copy sample in ram
+		char *line = NULL;
+		size_t linecap = 0;
+		ssize_t linelen;
+		while ((linelen = getline(&line, &linecap, keyb)) > 0)
+		{
+			sample.push_back(line);
+			//printf("%s\n",sample[sample.size()-1].c_str());
+		
+		}
+		
+		
+		fclose(keyb);
+
+		printf("bench lookups  sample size %lu \n",sample.size());
+		//bench procedure taken from emphf
+		stats_accumulator stats;
+		double tick = emphf::get_time_usecs();
+		size_t lookups = 0;
+		static const size_t lookups_per_sample = 1 << 16;
+		u_int64_t dumb=0;
+		double elapsed;
+		size_t runs = 10;
+		
+		for (size_t run = 0; run < runs; ++run) {
+			for (size_t ii = 0; ii < sample.size(); ++ii) {
+				
+				mphf_value = cmph_search(hash, sample[ii].c_str(), (cmph_uint32)sample[ii].size());
+
+				//do some silly work
+				dumb+= mphf_value;
+				
+				if (++lookups == lookups_per_sample) {
+					elapsed = emphf::get_time_usecs() - tick;
+					stats.add(elapsed / (double)lookups);
+					tick = emphf::get_time_usecs();
+					lookups = 0;
+				}
+			}
+		}
+		printf("CMPH_CHD bench lookups average %.2f ns +- stddev  %.2f %%   (fingerprint %llu)  \n", 1000.0*stats.mean(),stats.relative_stddev(),dumb);
+		
+
+	}
+
+	
+	//Destroy hash
+	cmph_destroy(hash);
+	cmph_io_nlfile_adapter_destroy(source);
+	fclose(keys_fd);
+	
+}
+
+
 
 
 int main (int argc, char* argv[])
@@ -414,12 +548,15 @@ int main (int argc, char* argv[])
 	}
 
 	FILE * key_file = NULL;
+	FILE * key_file_chd = NULL;
+
 	FILE * bench_file = NULL;
+	FILE * bench_file_chd = NULL;
 	
 	if(from_disk)
 	{
 		key_file = fopen("keyfile","w+");
-
+		key_file_chd = fopen("keyfile_chd.txt","w+");
 		//simple mehtod to ensure all elements are unique, but not random
 		u_int64_t step = ULLONG_MAX / n;
 		u_int64_t current = 0;
@@ -428,13 +565,22 @@ int main (int argc, char* argv[])
 		{
 			current = current + step;
 			fwrite(&current, sizeof(u_int64_t), 1, key_file);
+			fprintf(key_file_chd,"%llx\n",current);
 		}
 		fclose(key_file);
+		fclose(key_file_chd);
+
 		printf("key file generated \n");
+		
+		
+		
+		
+		
 		
 		if(bench_lookup)
 		{
 			bench_file = fopen("benchfile","w+");
+			bench_file_chd = fopen("benchfile_chd.txt","w+");
 
 			//create a test file
 			//if n < 10 M take all elements, otherwise regular sample to have 10 M elements
@@ -447,11 +593,16 @@ int main (int argc, char* argv[])
 				if( (cpt % stepb) == 0)
 				{
 					fwrite(&key, sizeof(u_int64_t), 1, bench_file);
+					fprintf(bench_file_chd,"%llx\n",key);
+
 					nb_in_bench_file ++;
 				}
 				cpt++;
 			}
 			
+			fclose(bench_file);
+			fclose(bench_file_chd);
+
 		}
 	}
 	else
@@ -470,6 +621,13 @@ int main (int argc, char* argv[])
     do_emphf();
     memory_usage("after emphf construction", "emphf");
 
+	if(from_disk)
+	{
+		cout << endl << "Construction with 'chd' library.. " << endl;
+		do_chd();
+		memory_usage("after chd construction", "chd");
+	}
+	
 	if(!from_disk)
 	{
 		cout << endl << "Construction with 'phf' library.. " << endl;
