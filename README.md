@@ -27,6 +27,7 @@ How to run
     git clone --recursive https://github.com/rchikhi/benchmphf
     cd benchmphf
     make
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/libcmph/lib
     ./benchmphf [number of keys, default: 100,000,000]
 
 

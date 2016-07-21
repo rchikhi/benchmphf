@@ -7,3 +7,6 @@
 [submodule "cmph"]
 	path = cmph
 	url = https://github.com/zvelo/cmph.git
+[submodule "Sux4J"]
+	path = Sux4J
+	url = https://github.com/vigna/Sux4J.git
