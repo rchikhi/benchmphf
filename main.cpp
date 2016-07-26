@@ -416,22 +416,42 @@ void do_emphf()
 	
 	if (bench_lookup && from_disk)
 	{
-		
-		u_int64_t dumb=0;
-		u_int64_t mphf_value;
-		begin = clock();
-		
-		auto data_iterator = file_binary("benchfile");
+		auto input_range = file_binary("benchfile");
 
-		for (auto const& key: data_iterator) {
-			mphf_value = mphf.lookup(key,adaptor);
-			//do some silly work
-			dumb+= mphf_value;
+		vector<u_int64_t> sample;
+		u_int64_t mphf_value;
+		
+		//copy sample in ram
+		for (auto const& key: input_range) {
+			sample.push_back(key);
 		}
 		
+		//bench procedure taken from emphf
+		stats_accumulator stats;
+		double tick = emphf::get_time_usecs();
+		size_t lookups = 0;
+		static const size_t lookups_per_sample = 1 << 16;
+		u_int64_t dumb=0;
+		double elapsed;
+		size_t runs = 10;
 		
-		end = clock();
-		printf("emphf %llu lookups in  %.2fs,  approx  %.2f ns per lookup   (fingerprint %llu)  \n", nb_in_bench_file, (double)(end - begin) / CLOCKS_PER_SEC,  ((double)(end - begin) / CLOCKS_PER_SEC)*1000000000/nb_in_bench_file,dumb);
+		for (size_t run = 0; run < runs; ++run) {
+			for (size_t ii = 0; ii < sample.size(); ++ii) {
+				
+				mphf_value = mphf.lookup(sample[ii],adaptor);
+
+				//do some silly work
+				dumb+= mphf_value;
+				
+				if (++lookups == lookups_per_sample) {
+					elapsed = emphf::get_time_usecs() - tick;
+					stats.add(elapsed / (double)lookups);
+					tick = emphf::get_time_usecs();
+					lookups = 0;
+				}
+			}
+		}
+		printf("EMPHF bench lookups average %.2f ns +- stddev  %.2f %%   (fingerprint %llu)  \n", 1000.0*stats.mean(),stats.relative_stddev(),dumb);
 	
 	}
 	
@@ -473,7 +493,7 @@ void do_chd()
 		vector<std::string> sample;
 		u_int64_t mphf_value;
 		
-		FILE * keyb = fopen ("keyfile_chd.txt","r");
+		FILE * keyb = fopen ("benchfile_chd.txt","r");
 		
 		//copy sample in ram
 		char *line = NULL;
@@ -489,7 +509,9 @@ void do_chd()
 		
 		fclose(keyb);
 
-		printf("bench lookups  sample size %lu \n",sample.size());
+		printf("sample size %lu \n",sample.size());
+
+		
 		//bench procedure taken from emphf
 		stats_accumulator stats;
 		double tick = emphf::get_time_usecs();
@@ -617,10 +639,11 @@ int main (int argc, char* argv[])
 	}
     memory_usage("initial data allocation");
 
-    cout << endl << "Construction with 'emphf' library.. " << endl;
-    do_emphf();
-    memory_usage("after emphf construction", "emphf");
+//    cout << endl << "Construction with 'emphf' library.. " << endl;
+//    do_emphf();
+//    memory_usage("after emphf construction", "emphf");
 
+	
 	if(from_disk)
 	{
 		cout << endl << "Construction with 'chd' library.. " << endl;
@@ -628,10 +651,11 @@ int main (int argc, char* argv[])
 		memory_usage("after chd construction", "chd");
 	}
 	
-	if(!from_disk)
-	{
-		cout << endl << "Construction with 'phf' library.. " << endl;
-		do_phf();
-		memory_usage("after phf construction","phf");
-	}
+	
+//	if(!from_disk)
+//	{
+//		cout << endl << "Construction with 'phf' library.. " << endl;
+//		do_phf();
+//		memory_usage("after phf construction","phf");
+//	}
 }
