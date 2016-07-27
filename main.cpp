@@ -265,7 +265,7 @@ private:
 
 
 u_int64_t *data;
-
+std::vector<u_int64_t> data_bench;
 struct phf phf; // let's put it as global variable, so that phf object isn't destroyed after end of function
 void do_phf()
 {
@@ -292,19 +292,56 @@ void do_phf()
 	
 	if(bench_lookup)
 	{
-		u_int64_t dumb=0;
-		u_int64_t mphf_value;
-		begin = clock();
-		for (u_int64_t i = 0; i < n; i++)
-		{
-			mphf_value =  PHF::hash<u_int64_t>(&phf,data[i]);
-			//do some silly work
-			dumb+= mphf_value;
-		}
 		
-		end = clock();
-		printf("PHF %lu lookups in  %.2fs,  approx  %.2f ns per lookup   (fingerprint %llu)  \n", n, (double)(end - begin) / CLOCKS_PER_SEC,  ((double)(end - begin) / CLOCKS_PER_SEC)*1000000000/n,dumb);
+	
+		
+		//bench procedure taken from emphf
+		stats_accumulator stats;
+		double tick = emphf::get_time_usecs();
+		size_t lookups = 0;
+		static const size_t lookups_per_sample = 1 << 16;
+		u_int64_t dumb=0;
+		double elapsed;
+		size_t runs = 10;
+		u_int64_t mphf_value;
+
+		for (size_t run = 0; run < runs; ++run) {
+			for (size_t ii = 0; ii < data_bench.size(); ++ii) {
+				
+				mphf_value =  PHF::hash<u_int64_t>(&phf,data_bench[ii]);
+
+				//do some silly work
+				dumb+= mphf_value;
+				
+				if (++lookups == lookups_per_sample) {
+					elapsed = emphf::get_time_usecs() - tick;
+					stats.add(elapsed / (double)lookups);
+					tick = emphf::get_time_usecs();
+					lookups = 0;
+				}
+			}
+		}
+		printf("PHF bench lookups average %.2f ns +- stddev  %.2f %%   (fingerprint %llu)  \n", 1000.0*stats.mean(),stats.relative_stddev(),dumb);
+		
+		
 	}
+	
+	
+//	if(bench_lookup)
+//	{
+//		u_int64_t dumb=0;
+//		u_int64_t mphf_value;
+//		begin = clock();
+//		for (u_int64_t i = 0; i < n; i++)
+//		{
+//			mphf_value =  PHF::hash<u_int64_t>(&phf,data[i]);
+//			//do some silly work
+//			dumb+= mphf_value;
+//		}
+//		
+//		end = clock();
+//		printf("PHF %lu lookups in  %.2fs,  approx  %.2f ns per lookup   (fingerprint %llu)  \n", n, (double)(end - begin) / CLOCKS_PER_SEC,  ((double)(end - begin) / CLOCKS_PER_SEC)*1000000000/n,dumb);
+//	}
 
 	
 }
@@ -566,6 +603,19 @@ void do_chd()
 	}
 
 	
+	FILE * mphf_fd = fopen("chd_file", "w");
+
+	 cmph_dump(hash, mphf_fd);
+
+	fclose(mphf_fd);
+
+	FILE * f = fopen("chd_file", "r");
+	fseek(f, 0, SEEK_END);
+	unsigned long len = (unsigned long)ftell(f);
+	fclose(f);
+	printf("CHD bits_per_key %.3f \n",len*8/(double)n);
+	
+	
 	//Destroy hash
 	cmph_destroy(hash);
 	cmph_io_nlfile_adapter_destroy(source);
@@ -617,11 +667,6 @@ int main (int argc, char* argv[])
 
 		printf("key file generated \n");
 		
-		
-		
-		
-		
-		
 		if(bench_lookup)
 		{
 			bench_file = fopen("benchfile","w+");
@@ -659,21 +704,36 @@ int main (int argc, char* argv[])
 		data = new u_int64_t[n];
 		for (u_int64_t i = 1; i < n; i++)
 			data[i] = rng();
+		
+		
+		if(bench_lookup)
+		{
+			
+			u_int64_t stepb =  n  / 10000000;
+			if(stepb==0) stepb=1;
+			for (int ii=0; ii<n; ii++) {
+				if( (ii % stepb) == 0)
+				{
+					data_bench.push_back(data[ii]);
+				}
+			}
+			
+		}
 	}
     memory_usage("initial data allocation");
 
-    cout << endl << "Construction with 'emphf' library.. " << endl;
-    do_emphf();
-    memory_usage("after emphf construction", "emphf");
+//    cout << endl << "Construction with 'emphf' library.. " << endl;
+//    do_emphf();
+//    memory_usage("after emphf construction", "emphf");
 
-	
+
 	if(from_disk)
 	{
 		cout << endl << "Construction with 'chd' library.. " << endl;
 		do_chd();
 		memory_usage("after chd construction", "chd");
 	}
-	
+
 	
 	if(!from_disk)
     {
@@ -681,4 +741,5 @@ int main (int argc, char* argv[])
 		do_phf();
 		memory_usage("after phf construction","phf");
 	}
+
 }
