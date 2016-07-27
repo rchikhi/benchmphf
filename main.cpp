@@ -278,7 +278,17 @@ void do_phf()
 
 	warnx("[phf] found perfect hash for %zu keys in %fs", n, (double)(end - begin) / CLOCKS_PER_SEC);
 	
-	
+    begin = clock();
+    PHF::compact(&phf);
+    end = clock();
+    warnx("compacted displacement map in %fs", (double)(end - begin) / CLOCKS_PER_SEC);
+
+    int d_bits = ffsl((long)phf_powerup(phf.d_max));
+    double k_bits = ((double)phf.r * d_bits) / n;
+    double g_load = (double)n / phf.r;
+    warnx("r:%zu m:%zu d_max:%zu d_bits:%d k_bits:%.2f g_load:%.2f", phf.r, phf.m, phf.d_max, d_bits, k_bits, g_load);
+
+
 	
 	if(bench_lookup)
 	{
@@ -457,6 +467,17 @@ void do_emphf()
 	
 	}
 	
+    // get true mphf size
+    // a bit of a dirty hack, could be made cleaner
+    std::ofstream os("dummy_emphf", std::ios::binary);
+    mphf.save(os);
+    std::ifstream is("dummy_emphf", std::ios::binary);
+    mphf.load(is);
+    size_t file_size = (size_t)is.tellg();
+    double bits_per_key = 8.0 * (double)file_size / (double)mphf.size();
+    std::cout << "EMPHF bits_per_key: " << bits_per_key << std::endl;
+
+
 }
 
 void do_chd()
@@ -641,9 +662,9 @@ int main (int argc, char* argv[])
 	}
     memory_usage("initial data allocation");
 
-//    cout << endl << "Construction with 'emphf' library.. " << endl;
-//    do_emphf();
-//    memory_usage("after emphf construction", "emphf");
+    cout << endl << "Construction with 'emphf' library.. " << endl;
+    do_emphf();
+    memory_usage("after emphf construction", "emphf");
 
 	
 	if(from_disk)
@@ -654,10 +675,10 @@ int main (int argc, char* argv[])
 	}
 	
 	
-//	if(!from_disk)
-//	{
-//		cout << endl << "Construction with 'phf' library.. " << endl;
-//		do_phf();
-//		memory_usage("after phf construction","phf");
-//	}
+	if(!from_disk)
+    {
+		cout << endl << "Construction with 'phf' library.. " << endl;
+		do_phf();
+		memory_usage("after phf construction","phf");
+	}
 }
