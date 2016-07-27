@@ -17,8 +17,8 @@
 // parameters:
 
 // switch between emphf algorithms
-#define EMPHF_HEM
-//#define EMPHF_SCAN
+//#define EMPHF_HEM
+#define EMPHF_SCAN
 //#define EMPHF_SEQ
 
 
@@ -366,7 +366,9 @@ void do_emphf()
 #ifdef VANILLA_EMPHF
 #ifdef EMPHF_HEM
 	emphf::mmap_memory_model mm;
-	mphf_t(mm, n, data_iterator, adaptor).swap(mphf);
+	auto data_iterator = emphf::range(static_cast<const u_int64_t*>(data), static_cast<const u_int64_t*>(data+n));
+    //from_disk not implemented
+	mphf_t(mm, n, data_iterator, adaptor).swap(mphf); // TODO: ajouter gamma, log2_expected_bucket (controle nb buckets)
 	string emphf_type = "vanilla emphf HEM";
 #else
 #ifdef EMPHF_SCAN
@@ -379,12 +381,12 @@ void do_emphf()
 	if(from_disk)
 	{
 		auto data_iterator = file_binary("keyfile");
-		mphf_t(sorter, n, data_iterator, adaptor).swap(mphf); // TODO: ajouter gamma, log2_expected_bucket (controle nb buckets)
+		mphf_t(sorter, n, data_iterator, adaptor).swap(mphf); 
 	}
 	else
 	{
 		auto data_iterator = emphf::range(static_cast<const u_int64_t*>(data), static_cast<const u_int64_t*>(data+n));
-		mphf_t(sorter, n, data_iterator, adaptor).swap(mphf); // TODO: ajouter gamma, log2_expected_bucket (controle nb buckets) 
+		mphf_t(sorter, n, data_iterator, adaptor).swap(mphf);
 	}
 #endif
 #else
