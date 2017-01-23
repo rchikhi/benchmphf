@@ -35,6 +35,9 @@ unsigned long n = 100000000; // [phf]: 4 GB mem , ~2 minutes construction
 
 bool bench_lookup = false;
 bool from_disk = false;
+bool only_emphf = false;
+bool only_phf = false;
+bool only_chd = false;
 u_int64_t nb_in_bench_file;
 
 #ifdef VANILLA_EMPHF
@@ -637,6 +640,9 @@ int main (int argc, char* argv[])
 	{
 		if(!strcmp("-bench",argv[ii])) bench_lookup= true;
 		if(!strcmp("-fromdisk",argv[ii])) from_disk= true;
+		if(!strcmp("-emphf",argv[ii])) only_emphf= true;
+		if(!strcmp("-phf",argv[ii])) only_phf= true;
+		if(!strcmp("-chd",argv[ii])) only_chd= true;
 	}
 
 	FILE * key_file = NULL;
@@ -719,24 +725,38 @@ int main (int argc, char* argv[])
 	}
     memory_usage("initial data allocation");
 
-    cout << endl << "Construction with 'emphf' library.. " << endl;
-    do_emphf();
-    memory_usage("after emphf construction", "emphf");
-
-
-	if(from_disk)
-	{
-		cout << endl << "Construction with 'chd' library.. " << endl;
-		do_chd();
-		memory_usage("after chd construction", "chd");
-	}
-
-	
-	if(!from_disk)
+    if ((!only_phf) && (!only_chd))
     {
-		cout << endl << "Construction with 'phf' library.. " << endl;
-		do_phf();
-		memory_usage("after phf construction","phf");
-	}
+        cout << endl << "Construction with 'emphf' library.. " << endl;
+        do_emphf();
+        memory_usage("after emphf construction", "emphf");
+        if (only_emphf)
+            return 0;
+    }
+
+
+    if ((!only_emphf) && (!only_phf))
+    {
+    	if(from_disk)
+    	{
+    		cout << endl << "Construction with 'chd' library.. " << endl;
+    		do_chd();
+    		memory_usage("after chd construction", "chd");
+    	}
+        if (only_chd)
+            return 0;
+    }
+
+	if ((!only_emphf) && (!only_chd))
+    {
+    	if(!from_disk)
+        {
+    		cout << endl << "Construction with 'phf' library.. " << endl;
+    		do_phf();
+    		memory_usage("after phf construction","phf");
+            if (only_phf)
+                return 0;
+    	}
+    }
 
 }
