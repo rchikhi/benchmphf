@@ -17,8 +17,8 @@
 // parameters:
 
 // switch between emphf algorithms
-//#define EMPHF_HEM
-#define EMPHF_SCAN
+#define EMPHF_HEM
+//#define EMPHF_SCAN
 //#define EMPHF_SEQ
 
 
@@ -289,11 +289,8 @@ void do_phf()
     warnx("r:%zu m:%zu d_max:%zu d_bits:%d k_bits:%.2f g_load:%.2f", phf.r, phf.m, phf.d_max, d_bits, k_bits, g_load);
 
 
-	
 	if(bench_lookup)
 	{
-		
-	
 		
 		//bench procedure taken from emphf
 		stats_accumulator stats;
@@ -722,9 +719,9 @@ int main (int argc, char* argv[])
 	}
     memory_usage("initial data allocation");
 
-//    cout << endl << "Construction with 'emphf' library.. " << endl;
-//    do_emphf();
-//    memory_usage("after emphf construction", "emphf");
+    cout << endl << "Construction with 'emphf' library.. " << endl;
+    do_emphf();
+    memory_usage("after emphf construction", "emphf");
 
 
 	if(from_disk)
