@@ -3,7 +3,9 @@ a benchmark tool for the construction of [minimal perfect hash functions](https:
 wikipedia definitions: A perfect hash function for a set S is a hash function that maps distinct elements in S to a set of integers, with no collisions. A minimal perfect hash function is a perfect hash function that maps n keys to n consecutive integers—usually [0..n−1] or [1..n].
 
 emphf library: https://github.com/ot/emphf
+
 CHD library: http://cmph.sourceforge.net/
+
 phf library: https://github.com/wahern/phf
 
 the aim of this program is to evaluate the time and memory used by
