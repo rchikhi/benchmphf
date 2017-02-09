@@ -7,9 +7,11 @@ CHD library: http://cmph.sourceforge.net/
 phf library: https://github.com/wahern/phf
 
 the aim of this program is to evaluate the time and memory used by
-those MPHF libraries during _construction_ of the structure.
+those MPHF libraries during _construction_ of the structure;
+alternatively, when run with the ``-bench`` command line parameter, it evaluates
+query time.
 
-it creates a minimal perfect hash function over the following input keys:
+minimal perfect hash functions are created over the following input keys:
 a random set of 64-bits integers
 (however both libraries support more versatile input, e.g. strings)
 
@@ -25,6 +27,7 @@ How to run
     git clone --recursive https://github.com/rchikhi/benchmphf
     cd benchmphf
     make
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/libcmph/lib
     ./benchmphf [number of keys, default: 100,000,000]
 
 
@@ -38,18 +41,19 @@ Example output
     
     Construction with 'emphf' library..
     [...]
-    benchmphf: [vanilla emphf scan] constructed perfect hash for 100000000 keys in 1765.302888s
-    after emphf construction    memory [current, maximum (maxRSS)]: [ 810, 3018] MB 
+    
+    benchmphf: [vanilla emphf scan] constructed perfect hash for 100000000 keys in 252.833206s
+    after emphf construction    memory [current, maximum (maxRSS)]: [ 810, 2804] MB 
     Very rough estimation of memory used by the MPHF constructed by emphf : 45 MB (3.77487 bits per elt)
 
     Construction with 'phf' library.. 
-    benchmphf: [phf] found perfect hash for 100000000 keys in 232.410405s
+    benchmphf: [phf] found perfect hash for 100000000 keys in 107.193024s
     after phf construction    memory [current, maximum (maxRSS)]: [ 938, 3515] MB 
     Very rough estimation of memory used by the MPHF constructed by phf : 128 MB (10.7374 bits per elt)
 
-What's interesting here is the time (1765 seconds) and peak memory (3018 MB) taken
+What's interesting here is the time (252 seconds) and peak memory (2804 MB) taken
 for constructing the MPHF using emphf, and similarly for phf. Note that peak memory
-includes the data size (here, 765 MB). Hence construction space for emphf is around 3018-765=2253 MB.
+includes the data size (here, 765 MB). Hence construction space for emphf is around 2804-765=2039 MB.
 The estimation of memory taken by the final MPHF (45 MB for emphf) is inaccurate, see below.
 
 
@@ -103,8 +107,15 @@ This is for GATB-core developers (https://github.com/GATB/gatb-core/).
     bin/benchmphf
 
 
+Contributors
+-----------
+
+G. Rizk
+
+
 Author
 ------
 
 Rayan Chikhi
 rayan.chikhi@univ-lille1.fr
+
