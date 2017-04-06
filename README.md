@@ -9,7 +9,7 @@ query time.
 
 minimal perfect hash functions are created over the following input keys:
 a random set of 64-bits integers
-(however both libraries support more versatile input, e.g. strings)
+(however libraries generally support more versatile input, e.g. strings)
 
 tested libraries:
 
