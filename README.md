@@ -8,6 +8,10 @@ CHD library: http://cmph.sourceforge.net/
 
 phf library: https://github.com/wahern/phf
 
+Sux4j library (from same authors as emphf): https://github.com/vigna/Sux4J
+
+note that Sux4J isn't integrated in the main benchmark code, but a separate script is provided.
+
 the aim of this program is to evaluate the time and memory used by
 those MPHF libraries during _construction_ of the structure;
 alternatively, when run with the ``-bench`` command line parameter, it evaluates
@@ -73,7 +77,7 @@ _emphf's scan\_mmap_ is slower than _phf_ but constructs more compact MPHFs, and
 
 However, I found that the _seq_ and the _HEM_ algorithms are faster than _phf_ during construction, and use less memory. For 1 billion 64-bits random integers, construction using _HEM_ takes 770 seconds and 24 GB of memory, whereas  _phf_ takes 3900 seconds and 48 GB of memory.
 
-All algorithms, except _scan\_mmap_, require in the order of 30 bytes per element during construction. _scan\_mmap_ is therefore only one capable of constructing large MPHFs in situations where memory is limited.
+phf and emphf, except in _scan\_mmap_ mode, require in the order of 30 bytes per element during construction. _scan\_mmap_ is therefore capable of constructing large MPHFs in situations where memory is limited.
 
 Notes
 -----
