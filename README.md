@@ -2,6 +2,17 @@ a benchmark tool for the construction of [minimal perfect hash functions](https:
 
 wikipedia definitions: A perfect hash function for a set S is a hash function that maps distinct elements in S to a set of integers, with no collisions. A minimal perfect hash function is a perfect hash function that maps n keys to n consecutive integers—usually [0..n−1] or [1..n].
 
+the aim of this program is to evaluate the time and memory used by
+those MPHF libraries during _construction_ of the structure;
+alternatively, when run with the ``-bench`` command line parameter, it evaluates
+query time.
+
+minimal perfect hash functions are created over the following input keys:
+a random set of 64-bits integers
+(however both libraries support more versatile input, e.g. strings)
+
+tested libraries:
+
 emphf library: https://github.com/ot/emphf
 
 CHD library: http://cmph.sourceforge.net/
@@ -11,15 +22,6 @@ phf library: https://github.com/wahern/phf
 Sux4j library (from same authors as emphf): https://github.com/vigna/Sux4J
 
 note that Sux4J isn't integrated in the main benchmark code, but a separate script is provided.
-
-the aim of this program is to evaluate the time and memory used by
-those MPHF libraries during _construction_ of the structure;
-alternatively, when run with the ``-bench`` command line parameter, it evaluates
-query time.
-
-minimal perfect hash functions are created over the following input keys:
-a random set of 64-bits integers
-(however both libraries support more versatile input, e.g. strings)
 
 Requirements
 ------------
