@@ -23,6 +23,8 @@ Sux4j library (from same authors as emphf): https://github.com/vigna/Sux4J
 
 note that Sux4J isn't integrated in the main benchmark code, but a separate script is provided.
 
+This work was done before the development of our library https://github.com/rizkg/BBHash, that is not integrated in the benchmark
+
 Requirements
 ------------
 
