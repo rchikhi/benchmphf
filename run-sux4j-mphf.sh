@@ -6,4 +6,4 @@ if [ ! -f ./Sux4J/sux4j-4.0.1/sux4j-4.0.1.jar ]; then
     bash -c "cd Sux4J && make binary"
 fi
 javac -cp $CLASSPATH Sux4J/slow/it/unimi/dsi/sux4j/mph/*.java
-java -cp $CLASSPATH org.junit.runner.JUnitCore it.unimi.dsi.sux4j.mph.MinimalPerfectHashFunctionSlowTest
+java -Djava.io.tmpdir=/tmp/ -cp $CLASSPATH org.junit.runner.JUnitCore it.unimi.dsi.sux4j.mph.GOV3FunctionSlowTest
